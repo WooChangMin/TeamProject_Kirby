@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class Boss : MonoBehaviour
 {
-    // [SerializeField] private float moveStartTime; // 대기시간
-
     [SerializeField] private float moveSpeed; // 속도
     [SerializeField] private float startTime; // 시작시간
     [SerializeField] private float loopTime;  // 반복시간
@@ -34,7 +32,6 @@ public class Boss : MonoBehaviour
 
         if (bossHp <= 4)
         {
-            // Invoke("Move", moveStartTime);
             InvokeRepeating("Move", startTime, loopTime);
             InvokeRepeating("SpeedMove", startUpTime, loopUpTime);
         }
@@ -49,7 +46,7 @@ public class Boss : MonoBehaviour
     }
     private void TrueDamage(float damage)
     {
-        ap = bossHp - damage;
+        //ap = bossHp - damage;
     }
 
 
