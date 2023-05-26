@@ -8,14 +8,19 @@ public class Bouncy : MonoBehaviour
     [SerializeField] private int angle = 60;
     [SerializeField] private float force;
     private Rigidbody2D rb;
+    private Animator anim;
     private float goDown;
     [SerializeField] float lessFoundation;
     private float time;
     private bool leftOrRight;
 
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+
+
     }
     private void Start()
     {
@@ -28,7 +33,10 @@ public class Bouncy : MonoBehaviour
         if (time > 2f)
         {
             time = 0;
-            leftOrRight = !leftOrRight;
+
+            int random = Random.Range(0, 2);
+            if (random == 0)
+                leftOrRight = !leftOrRight;
 
             if (leftOrRight)
                 JumpRight();
@@ -51,6 +59,23 @@ public class Bouncy : MonoBehaviour
         float height = Mathf.Sin(angle * Mathf.PI / 180);
 
         rb.AddRelativeForce(new Vector2( - (foundation - lessFoundation), height) * force, ForceMode2D.Impulse);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+            Die();
+    }
+
+    private void Die()
+    {
+        anim.Play("Die");
+        Invoke("SetActiveFalse", 0.4f);
+    }
+
+    private void SetActiveFalse()
+    {
+        gameObject.SetActive(false);
     }
 
 }
