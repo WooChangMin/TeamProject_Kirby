@@ -13,6 +13,7 @@ public class Bouncy : MonoBehaviour
     [SerializeField] float lessFoundation;
     private float time;
     private bool leftOrRight;
+    private SpriteRenderer sprite;
 
 
     private void Awake()
@@ -48,6 +49,8 @@ public class Bouncy : MonoBehaviour
     }
     private void JumpRight()
     {
+        anim.Play("JumpRight");
+
         float foundation = Mathf.Cos(angle * Mathf.PI / 180);
         float height = Mathf.Sin(angle * Mathf.PI / 180);
 
@@ -55,6 +58,8 @@ public class Bouncy : MonoBehaviour
     }
     private void JumpLeft()
     {
+        anim.Play("JumpLeft");
+
         float foundation = Mathf.Cos(angle * Mathf.PI / 180);
         float height = Mathf.Sin(angle * Mathf.PI / 180);
 
