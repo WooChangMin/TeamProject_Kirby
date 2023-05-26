@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+public class ProjectileAn : MonoBehaviour
 {
-    [SerializeField] private float ProjectileSpeed;
+    [SerializeField] private float ProjectileAnger;
     [SerializeField] private GameObject destroyEffect;
     [SerializeField] Transform projectile;
     private Rigidbody2D rigidbody2d;
@@ -16,7 +16,7 @@ public class Projectile : MonoBehaviour
     }
     private void Start()
     {
-        projectile.GetComponent<Rigidbody2D>().velocity = projectile.transform.right * ProjectileSpeed;
+        projectile.GetComponent<Rigidbody2D>().velocity = projectile.transform.right * ProjectileAnger;
     }
     private void Update()
     {

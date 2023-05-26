@@ -48,10 +48,7 @@ public class Yaban : MonoBehaviour                      // 야반 : 점프해서 대각�
 
         }
     }   
-    //private void JumpingUpdate()
-    //{
-    //    rigidbody2d.velocity = new Vector2(transform.right.x * jumpPower,   rigidbody2d.velocity.y);
-    //}
+
     private void AttackUpdate()
     {
 
