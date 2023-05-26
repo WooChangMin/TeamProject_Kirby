@@ -8,7 +8,7 @@ using UnityEngine;
 public class Keke : MonoBehaviour
 {
     [SerializeField] private TMP_Text text;
-    public enum State { Idle, Trace, Fly, Battle}
+    public enum State { Idle, Trace, Fly, Battle, AttackWait, Attack, Die}
     private State curState;
 
     [SerializeField] float moveSpeed;
@@ -66,7 +66,15 @@ public class Keke : MonoBehaviour
             case State.Battle:
                 BattleUpdate();
                 break;
-
+            case State.AttackWait:
+                AttackWaitUpdate();
+                break;
+            case State.Attack:
+                AttackUpdate();
+                break;
+            case State.Die:
+                DieUpdate();
+                break;
         }
     }
 
@@ -93,7 +101,6 @@ public class Keke : MonoBehaviour
         else
             targetFlyPoint++;
 
-        Debug.Log(targetFlyPoint);
 
         curState = State.Fly;
     }
@@ -118,33 +125,30 @@ public class Keke : MonoBehaviour
         //trace -> battle, return
 
         //쫓아가기
-        transform.position = Vector2.SmoothDamp(gameObject.transform.position, playerTransform.position, ref vel, 1f);
-
+        Vector2 closeToPlayer = new Vector2(player.transform.position.x + 0.5f, player.transform.position.y + 0.5f);
+        transform.position = Vector2.SmoothDamp(gameObject.transform.position, closeToPlayer, ref vel, 1f);
         //플레이어가 멀어졌을 때
         if (Vector2.Distance(transform.position, playerTransform.position) > detectRange)
             curState = State.Idle;
 
         //플레이어가 공격범위 안에 들면
         if (Vector2.Distance(transform.position, playerTransform.position) < battleRange)
+        {
             curState = State.Battle;
+        }
     }
 
-    private float BattleWaitTime;
-    [SerializeField] private int life = 3;
+
     private void BattleUpdate()
     {
-        //Battle -> attack, trace
-        BattleWaitTime += Time.deltaTime;
-        //Time.deltaTime -> 1초당 걸린 프레임 보정해주는 값 30fs -> 1/30
-        //Update에서 BattleUpdate가 실행되면서 1초가 계속 흐르고 그 값을 쓴다
-        //그냥 0.02f(프레임 갱신되는 주기인듯) 더해서 시간 측정하는 거보다 프레임 보정이 되니까 Time.deltaTime 쓴다는 듯
 
-        //onCollisionEnter상태에서 3초 마다 Attack이 가능하게
-        if (BattleWaitTime > 3)
-        {
-            BattleWaitTime = 0;
-            Attack();
-        }
+        //Battle -> attackWait, trace
+
+        rb.velocity = new Vector2(0, 0);
+
+        //플레이어에게 가까이 다가가기
+        //Vector2 closeToPlayer = new Vector2(player.transform.position.x + 2f, player.transform.position.y + 2f);
+        //transform.position = Vector2.SmoothDamp(gameObject.transform.position, closeToPlayer, ref vel, 1f);
 
         //플레이어가 battle range 벗어나면 trace 상태로
         //근데 battle range -> trace 랑 trace -> battle range가 겹치므로
@@ -152,36 +156,65 @@ public class Keke : MonoBehaviour
         if (Vector2.Distance(transform.position, playerTransform.position) > battleRange + 1)
             curState = State.Trace;
 
-        //battle Range 들어서도 플레이어에게 비비기 위함 근데 너무 가까이가면 밀어내니까 어느정도 거리 더함
-        Vector2 closeToPlayer = new Vector2(player.transform.position.x + 0.8f, player.transform.position.y + 0.8f);
-        transform.position = Vector2.SmoothDamp(gameObject.transform.position, closeToPlayer, ref vel, 1f);
+        curState = State.AttackWait;
     }
 
-    private void Attack()
+    private float attackWaitTime = 0f;
+
+    private void AttackWaitUpdate()
     {
-        anim.SetTrigger("IsAttack");
-        //Attack -> battle
+        //attackWait -> attack, Trace
+
+        attackWaitTime += Time.deltaTime;
+        //Debug.Log(attackWaitTime);
+
+        if (attackWaitTime > 3f)
+        {
+            Debug.Log("aa");
+            attackWaitTime = 0;
+            curState = State.Attack;
+        }
+
+        if (Vector2.Distance(transform.position, playerTransform.position) > battleRange + 1)
+            curState = State.Trace;
+    }
+
+    private float attackTime = 0f;
+    private void AttackUpdate()
+    {
+        //Attack -> AttackWait
+       
         AttackRange.SetActive(true);
-        StartCoroutine(AttackFalse());
-    }
-    //Attack collider가 1초만 지속되도록 하기 위함
-    IEnumerator AttackFalse()
-    {
-        yield return new WaitForSeconds(1f);
-        AttackRange.SetActive(false);
+        anim.SetBool("IsAttack", true);
+
+        attackTime += Time.deltaTime;
+
+        if (attackTime > 1.4f)
+        {
+            anim.SetBool("IsAttack", false);
+            AttackRange.SetActive(false);
+            curState = State.AttackWait;
+            attackTime = 0f;
+        }
+
     }
 
-    //플레이어의 공격에 맞으면
+    //플레이어 콜리젼에 맞으면
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log("playerCollision Entered");
-        Die();
+        curState = State.Die;
     }
     
-    private void Die()
+    private void DieUpdate()
+    {
+        anim.Play("kekeFalling");
+        Invoke("SetActiveFalse", 0.4f);
+    }
+
+    private void SetActiveFalse()
     {
         gameObject.SetActive(false);
     }
-
 
 }
