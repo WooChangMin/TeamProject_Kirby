@@ -1,33 +1,41 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
 
 public class Player : MonoBehaviour
 {
-    enum State { normal, Fire, Broom, Boomerang , Size}
+    enum State {Normal, Die, Full, Fire, Broom, Boomerang,  Size}
+
 
     [SerializeField] private float moveSpeed;
     [SerializeField] private float maxSpeed;
+    [SerializeField] private float slideSpeed;
     [SerializeField] private float jumpPower;
     [SerializeField] private float movePower;
     [SerializeField] private float levitationPower;
     [SerializeField] private LayerMask groundMask;
 
-    
-    
+    GameObject gameobj;
+    private float hp = 10;
 
     private Vector2 inputDir;
+
 
     private new SpriteRenderer renderer;
     private Rigidbody2D rb;
     private Animator anim;
     private bool isGround;
     private bool isLeviting;
+    private bool isSlide;
     private State curState;
+    private bool isPressed;
+
    
 
     private void Awake()
@@ -39,7 +47,13 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        Move();
+        if (isPressing)
+            Eat();
+        else
+            Debug.Log("not pressing");
+
+        if(!isSlide)
+            Move();
     }
     private void FixedUpdate()
     {
@@ -61,7 +75,7 @@ public class Player : MonoBehaviour
             renderer.flipX = false;
         else if (inputDir.x < 0)
             renderer.flipX = true;
-
+    
     }
 
     private void Jump()
@@ -91,16 +105,91 @@ public class Player : MonoBehaviour
         }
     }
 
-    
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        
+        
+    }
 
-
-
-    /*    private void fly()
+    //충돌시 뒤로 팅겨나게
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "monster")
         {
-            if (!isGround && isLeviting)
-                rb.velocity = Vector2.up * levitationPower;
+            //Attack - 3.22
+            if(!isSlide)
+                OnDamaged(collision.transform.position); //Damaged - 3.22
         }
-    */
-    //ispressed
+    }
+    public void OnDamaged(Vector2 TargetPos)
+    {//-3.22
+     //Change Layer
+        hp --;
+        if (hp == 0)
+        {
+            Debug.Log("죽었습니다.");
+            curState = State.Die;
+        }
+        else
+        {
+            gameObject.layer = 20;
+            //Readctio Force 3.22
 
+            renderer.color = new Color(1, 1, 1, 0.4f);
+            int dirc = transform.position.x - TargetPos.x > 0 ? 1 : -1;
+            rb.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
+
+            //anim.SetTrigger("Die"); //- 3.25
+            Invoke("OffDamaged", 3);
+        }
+    }
+    void OffDamaged()   
+    {
+        gameObject.layer = 3;
+        renderer.color =new Color(1, 1, 1, 1);
+    }
+
+    private void Eat()
+    {
+        
+        Debug.DrawRay(transform.position, Vector2.right * 5f, Color.green);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.right, 5f, groundMask);
+    }
+
+    private void Slide()
+    {
+        if (inputDir.x < 0 && rb.velocity.x > -maxSpeed)
+            rb.velocity = Vector2.right * inputDir.x * slideSpeed;
+        else if (inputDir.x > 0)
+            rb.velocity = Vector2.right * inputDir.x * slideSpeed;
+    }
+
+    private void OnSlide(InputValue value)
+    {
+        if (isGround)
+        {
+            Slide();
+            anim.SetBool("IsSlide", true);
+            isSlide = true;
+
+            Invoke("ChangeState", 0.35f);
+        }
+    }
+
+    private void ChangeState()
+    {
+        anim.SetBool("IsSlide", false);
+        isSlide = false;
+    }
+
+    private bool isPressing;
+    public void OnEat(InputValue value)
+    {
+        isPressing = value.isPressed;
+
+        if (isPressing)
+            Debug.Log("KeyDown");
+        else
+            Debug.Log("KeyUp");
+    }
 }
