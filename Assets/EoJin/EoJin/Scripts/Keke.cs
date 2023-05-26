@@ -18,13 +18,11 @@ public class Keke : MonoBehaviour
     //근데 너무 가까우면 collider끼리 부딪혀서 더이상 가깝게 못가는 듯
     [SerializeField] private float battleRange;
     [SerializeField] private Player player;
+    private Collider2D playerCol;
 
     //공격을 할 수 있다가(SetActive(true) 못하게 하기 위해 gameObject
     //이 오브젝트의 콜라이더 안에 들면 플레이어가 데미지 받음
     [SerializeField] private GameObject AttackRange;
-
-    //맞으면 데미지를 받는 무언가의 게임오브젝트(플레이어거나 부메랑이거나)
-    [SerializeField] private Collider2D playerAttackCol;
 
     private Transform playerTransform;
     private Collider2D kekeCol;
@@ -44,6 +42,7 @@ public class Keke : MonoBehaviour
         kekeCol = gameObject.GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
+        playerCol = player.GetComponent<Collider2D>();
     }
     private void Start()
     {
@@ -56,19 +55,15 @@ public class Keke : MonoBehaviour
         switch (curState)
         {
             case State.Idle:
-                text.text = "Idle";
                 IdleUpdate();
                 break;
             case State.Fly:
-                text.text = "Fly";
                 FlyUpdate();
                 break;
             case State.Trace:
-                text.text = "Trace";
                 TraceUpdate();
                 break;
             case State.Battle:
-                text.text = "Battle";
                 BattleUpdate();
                 break;
 
@@ -158,7 +153,7 @@ public class Keke : MonoBehaviour
             curState = State.Trace;
 
         //battle Range 들어서도 플레이어에게 비비기 위함 근데 너무 가까이가면 밀어내니까 어느정도 거리 더함
-        Vector2 closeToPlayer = new Vector2(player.transform.position.x + 1f, player.transform.position.y + 1f);
+        Vector2 closeToPlayer = new Vector2(player.transform.position.x + 0.8f, player.transform.position.y + 0.8f);
         transform.position = Vector2.SmoothDamp(gameObject.transform.position, closeToPlayer, ref vel, 1f);
     }
 
@@ -179,27 +174,10 @@ public class Keke : MonoBehaviour
     //플레이어의 공격에 맞으면
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        Debug.Log("collision Entered");
-        if (collision.collider == playerAttackCol)
-        {
-            Debug.Log("aaa");
-            StartCoroutine(DamagedForOnce());
-        }
+        Debug.Log("playerCollision Entered");
+        Die();
     }
-    //플레이어 공격이 1초동안 된다면 1초동안 1번만 생명이 깎이게 하기 위해 코루틴
-    IEnumerator DamagedForOnce()
-    {
-        damaged();
-        yield return new WaitForSeconds(1f);
-    }
-
-    private void damaged()
-    {
-        //damaged -> die
-        life -= 1;
-        if (life == 0)
-            Die();
-    }
+    
     private void Die()
     {
         gameObject.SetActive(false);
